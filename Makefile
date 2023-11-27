@@ -12,7 +12,7 @@ page-index.odocl : page-index.odoc
 	odoc link page-index.odoc
 
 index.html : page-index.odocl assets/odoc.css
-	odoc html-generate -o . page-index.odocl --theme-uri=assets
+	odoc html-generate -o . page-index.odocl --theme-uri=assets --support-uri=assets
 
 assets/odoc.css :
 	odoc support-files -o assets

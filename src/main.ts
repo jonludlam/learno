@@ -7,23 +7,23 @@ import { StateField, StateEffect } from "@codemirror/state"
 import { StreamLanguage } from "@codemirror/language"
 import {oCaml} from "@codemirror/legacy-modes/mode/mllike"
 
-const toggleHelp = StateEffect.define<string>()
+const toggleHelp = StateEffect.define<{id:string, solution:string}>()
 
- function helpPanelState(id : string) {
-  return StateField.define<string>({
-  create: () => id,
+ function helpPanelState(config : {id:string, solution:string}) {
+  return StateField.define<{id:string, solution:string}>({
+  create: () => config,
   update(value, tr) {
     for (let e of tr.effects) if (e.is(toggleHelp)) value = e.value
     return value
   },
-  provide: f => showPanel.from(f, id => createHelpPanel(id))
+  provide: f => showPanel.from(f, config => createHelpPanel(config))
 })}
 
 function append_to_output(id : string, output : any, only_mime : boolean) {
   const container = document.getElementById(id)!
   container.innerHTML = '';
   const pre = document.createElement('pre')
-  pre.textContent = "" + output.stdout + output.caml_ppf
+  pre.textContent = "" + (output.stdout || "") + (output.caml_ppf || "")
   if (!only_mime) {
     container.appendChild(pre)
   }
@@ -43,8 +43,8 @@ function append_to_output(id : string, output : any, only_mime : boolean) {
   })
 }
 
-function createHelpPanel(id : string) {
-  return (function (view:EditorView){
+function createHelpPanel(config : {id:string, solution:string}) {
+  return (function (view:EditorView) {
     let dom = document.createElement("div")
     let button = document.createElement("button")
     dom.appendChild(button)
@@ -54,9 +54,21 @@ function createHelpPanel(id : string) {
     dom.className = "cm-run-panel"
     button.onclick = () => {
       exec(view.state.doc.toString()).then((result : any) =>
-      append_to_output("output-"+id, result, false)
-      )
+      append_to_output("output-"+config.id, result, false))
     }
+    if (config.solution != "") {
+      let button = document.createElement("button")
+      dom.appendChild(button)
+      button.textContent = "Show solution"
+      button.onclick = function() {
+        let solution = document.getElementsByClassName(config.solution)[0]
+        let solution2 = <HTMLElement>solution
+
+         console.log("here we are!")
+         view.dispatch({
+          changes: {from: 0, to:view.state.doc.length, insert: solution2.innerText}
+        })
+    }}
     return {top: true, dom}
   })
 }
@@ -70,8 +82,8 @@ const helpTheme = EditorView.baseTheme({
 })
 
 
-function helpPanel(id : string) {
-  return [helpPanelState(id), helpTheme]
+function helpPanel(id : string, solution : string) {
+  return [helpPanelState({id,solution}), helpTheme]
 }
 
 var output = 1
@@ -82,8 +94,12 @@ function make_editor(domelt : Element) {
   let outputelt = document.createElement("div")
   let id = "id"+output++
   let mime_only = parent.classList.contains('mime-only')
-  let has_solution = parent.classList.contains('has-solution')
-  
+  let solution = ""
+  parent.classList.forEach(function(item) {
+    if (item.startsWith("solution-")) {
+      solution = item.slice(9)
+    }
+  })
   outputelt.setAttribute("id","output-"+id)
   if(parent) {
     if(parent.classList.contains('autorun')) {
@@ -101,7 +117,7 @@ function make_editor(domelt : Element) {
           extensions: [
             basicSetup,
             StreamLanguage.define(oCaml),
-            helpPanel(id)
+            helpPanel(id, solution)
           ],
           parent: grandparent})
       parent.remove()

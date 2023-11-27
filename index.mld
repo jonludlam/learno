@@ -50,6 +50,35 @@ let _ =
   Printf.printf "Hello, this is automatically run, and the output should appear below!\n";;
 ]}
 
+{1 Solutions}
+
+Solutions can be added to code blocks. The user can click a button to reveal the solution.
+
+The code block is tagged with [solution-foo], and the solution is tagged with [foo]:
+
+{v
+{@ocaml solution-foo[
+let _ =
+  (* fill in the answere here! *)
+]}
+
+{@ocaml foo noshow[
+let _ =
+  Printf.printf "Hello, this is the solution!\n";;
+]}
+v}
+
+{@ocaml solution-foo[
+let _ =
+  (* fill in the answere here! *)
+]}
+
+{@ocaml foo noshow[
+let _ =
+  Printf.printf "Hello, this is the solution!\n";;
+]}
+
+
 {1 Mime output}
 
 Rich output from OCaml can be rendered as well. For example, here's an image:
@@ -64,7 +93,19 @@ let _ =
 {1 Interactive elements}
 
 Interactive elements can be added by rendering html in OCaml and the inserting it
-via the [Mime_printer] library. For example, here's a simple question:
+via the [Mime_printer] library. The code can be hidden and the non-mime outputs
+suppressed via the [noshow] and [mime-only] tags. For example, here's a simple question:
+
+{v
+{@ocaml autorun noshow mime-only[
+let html = {|
+<div id="...
+|};;
+
+let _ =
+  Mime_printer.push "text/html" html;;
+]}
+v}
 
 {@ocaml autorun noshow mime-only[
 let html = {|
@@ -100,6 +141,8 @@ let _ =
 
 {1 Mandelbrot}
 
+Here's a rather more interesting example - we'll build a Mandelbrot generator!
+
 Here we're declaring some types and helper functions that will be useful.
 
 {@ocaml[
@@ -128,10 +171,6 @@ let toPPM = function
 Now [drawall cfn img] takes a function [cfn] of type [xy -> colour] and
 an [img] of type [image], and fills the image with the result of [cfn].
 
-We'll also define [mandelbrot maxIter pos] which returns a number between
-0.0 and 1.0 depending on how many iterations were taken, then some functions
-to map this [mandelbrot] function into an image.
-
 {@ocaml[
 let drawAll cfn img =
     match img with
@@ -141,7 +180,24 @@ let drawAll cfn img =
                 let new_color = cfn (x,y) in
                 rows.(x) <- new_color
             ) rows) pixels;;
+]}
 
+Now we can define the Mandelbrot function. It takes a maximum number of iterations
+
+We'll also define [mandelbrot maxIter pos] which returns a number between
+0.0 and 1.0 depending on how many iterations were taken. This function needs
+to start with the complex number {m c = (x,y)}, where {m x} and {m y} are
+supplied to the function, and the initial value {m z_0=0+0i}. It must then
+iterate the function
+{m z_{i+1} \to z_i^2 + c} until either the number of iterations is reached, or the
+value of {m |z_i|} exceeds 2.0. The result is then [i/maxIter].
+
+{@ocaml solution-mandelbrot[
+let mandelbrot maxIter (x,y) =
+  (* Insert solution here! *)
+]}
+
+{@ocaml noshow mandelbrot[
 let mandelbrot maxIter (x,y) =
     let rec solve (a,b) c =
         if c = maxIter then 1.0
@@ -149,10 +205,14 @@ let mandelbrot maxIter (x,y) =
             solve (a*.a -. b*.b +. x, 2.0*.a*.b +. y) (c+1)
         else (float_of_int c /. float_of_int maxIter)
     in solve (x,y) 0;;
+]}
 
+We can then map the result of [mandelbrot] to a colour using [chooseColour].
+
+{@ocaml[
 let chooseColour c =
     let r = 255.0 *. cos c in
-    let g = 255.0 *. cos (2.0 *. c) *. cos (2.0 *. c) in
+    let g = 255.0 *. cos (4.0 *. c) *. cos (2.0 *. c) in
     let b = 255.0 *. sin c in
     (int_of_float r,int_of_float g,int_of_float b);;
 
@@ -179,8 +239,6 @@ let convert ppm =
     ImagePNG.write_png cw image;
     Buffer.contents b;;
 ]}
-
-{1 Testing}
 
 Now let's test it by creating an image!
 
