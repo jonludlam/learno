@@ -1,0 +1,194 @@
+{0 LearnO}
+
+This is a hacking day project inspired by {:https://rstudio.github.io/learnr/index.html}.
+It's a tool for creating interactive tutorials in OCaml, using [mld] syntax as the source,
+[odoc] to render it, and the adding a bit of javascript to make it interactive.
+
+Note that this is entirely statically served content. There's no server-side component
+(unlike the RStudio version).
+
+{1 Introduction}
+
+The output is split by sections, and the user can go back and forth between them.
+Each section can contain text, code, and interactive elements.
+
+{2 Subsections}
+
+Only the top-level sections (level 1) have their own individual tabs. Subsections
+are just rendered as part of the parent section.
+
+{2 Code}
+
+Code is rendered as a code block, and can be run by the user.
+
+{v
+{@ocaml[
+let _ =
+  Printf.printf "Hello, ocaml world!\n";;
+]}
+v}
+
+is rendered as
+
+{@ocaml[
+let _ =
+  Printf.printf "Hello, ocaml world!\n";;
+]}
+
+Additional tags can be added to the code block to control its behaviour. For example,
+to autorun a code block, add the [autorun] tag:
+
+{v
+{@ocaml autorun[
+let _ =
+  Printf.printf ...
+]}
+v}
+
+{@ocaml autorun[
+let _ =
+  Printf.printf "Hello, this is automatically run, and the output should appear below!\n";;
+]}
+
+{1 Mime output}
+
+Rich output from OCaml can be rendered as well. For example, here's an image:
+
+{@ocaml autorun[
+let imgdata = {|iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAApgAAAKYB3X3/OAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANCSURBVEiJtZZPbBtFFMZ/M7ubXdtdb1xSFyeilBapySVU8h8OoFaooFSqiihIVIpQBKci6KEg9Q6H9kovIHoCIVQJJCKE1ENFjnAgcaSGC6rEnxBwA04Tx43t2FnvDAfjkNibxgHxnWb2e/u992bee7tCa00YFsffekFY+nUzFtjW0LrvjRXrCDIAaPLlW0nHL0SsZtVoaF98mLrx3pdhOqLtYPHChahZcYYO7KvPFxvRl5XPp1sN3adWiD1ZAqD6XYK1b/dvE5IWryTt2udLFedwc1+9kLp+vbbpoDh+6TklxBeAi9TL0taeWpdmZzQDry0AcO+jQ12RyohqqoYoo8RDwJrU+qXkjWtfi8Xxt58BdQuwQs9qC/afLwCw8tnQbqYAPsgxE1S6F3EAIXux2oQFKm0ihMsOF71dHYx+f3NND68ghCu1YIoePPQN1pGRABkJ6Bus96CutRZMydTl+TvuiRW1m3n0eDl0vRPcEysqdXn+jsQPsrHMquGeXEaY4Yk4wxWcY5V/9scqOMOVUFthatyTy8QyqwZ+kDURKoMWxNKr2EeqVKcTNOajqKoBgOE28U4tdQl5p5bwCw7BWquaZSzAPlwjlithJtp3pTImSqQRrb2Z8PHGigD4RZuNX6JYj6wj7O4TFLbCO/Mn/m8R+h6rYSUb3ekokRY6f/YukArN979jcW+V/S8g0eT/N3VN3kTqWbQ428m9/8k0P/1aIhF36PccEl6EhOcAUCrXKZXXWS3XKd2vc/TRBG9O5ELC17MmWubD2nKhUKZa26Ba2+D3P+4/MNCFwg59oWVeYhkzgN/JDR8deKBoD7Y+ljEjGZ0sosXVTvbc6RHirr2reNy1OXd6pJsQ+gqjk8VWFYmHrwBzW/n+uMPFiRwHB2I7ih8ciHFxIkd/3Omk5tCDV1t+2nNu5sxxpDFNx+huNhVT3/zMDz8usXC3ddaHBj1GHj/As08fwTS7Kt1HBTmyN29vdwAw+/wbwLVOJ3uAD1wi/dUH7Qei66PfyuRj4Ik9is+hglfbkbfR3cnZm7chlUWLdwmprtCohX4HUtlOcQjLYCu+fzGJH2QRKvP3UNz8bWk1qMxjGTOMThZ3kvgLI5AzFfo379UAAAAASUVORK5CYII=|};;
+
+let _ =
+  Mime_printer.push ~encoding:Base64 "image/png" imgdata;;
+]}
+
+{1 Interactive elements}
+
+Interactive elements can be added by rendering html in OCaml and the inserting it
+via the [Mime_printer] library. For example, here's a simple question:
+
+{@ocaml autorun noshow mime-only[
+let html = {|
+<div id="letter-a-answer_container" class="shiny-html-output tutorial-question shiny-bound-output" aria-live="polite"><div id="letter-a-answer" class="form-group shiny-input-radiogroup shiny-input-container shiny-input-container-inline shiny-bound-input" role="radiogroup" aria-labelledby="letter-a-answer-label">
+  <label class="control-label" id="letter-a-answer-label" for="letter-a-answer">What number is the letter A in the English alphabet?</label>
+  <div class="shiny-options-group">
+    <label class="radio-inline">
+      <input type="radio" name="letter-a-answer" value="8">
+      <span>8</span>
+    </label>
+    <label class="radio-inline">
+      <input type="radio" name="letter-a-answer" value="14">
+      <span>14</span>
+    </label>
+    <label class="radio-inline">
+      <input type="radio" name="letter-a-answer" value="1">
+      <span>1</span>
+    </label>
+    <label class="radio-inline">
+      <input type="radio" name="letter-a-answer" value="23">
+      <span>23</span>
+    </label>
+  </div>
+</div>
+</div>
+<div id="letter-a-message_container" class="shiny-html-output shiny-bound-output" aria-live="polite"></div>
+<div id="letter-a-action_button_container" class="shiny-html-output shiny-bound-output" aria-live="polite"><button class="btn btn-default action-button btn-primary shiny-bound-input" onclick="javascript:alert('clicked')" id="letter-a-action_button" type="button"><span data-i18n="button.questionsubmit">Submit Answer</span></button></div>
+|};;
+
+let _ =
+  Mime_printer.push "text/html" html;;
+]}
+
+{1 Mandelbrot}
+
+Here we're declaring some types and helper functions that will be useful.
+
+{@ocaml[
+type colour = int * int * int (* RGB colour components, 0..255 *);;
+type xy = int * int (* points (x,y) and sizes (w,h) *);;
+type image = Image of xy * colour array array;;
+let image (w,h) c =
+    Image ((w,h),(Array.init h (fun _ -> Array.make w c)));;
+let drawPixel (x,y) c = function
+    | Image (_,arr) -> Array.set arr.(y) x c;;
+let toPPM = function
+    | Image (xy,pixels) ->
+        let buf = Buffer.create 1000 in
+        Printf.bprintf buf "P3\n";
+        Printf.bprintf buf "%d %d\n255\n" (fst xy) (snd xy);
+        Array.iter (fun row ->
+            let a = Array.map (fun (r,g,b) ->
+                    Printf.sprintf "%d %d %d" r g b 
+                ) row |> Array.to_list in
+            let s = String.concat " " a in
+            Printf.bprintf buf "%s\n" s
+        ) pixels;
+        Buffer.contents buf;;
+]}
+
+Now [drawall cfn img] takes a function [cfn] of type [xy -> colour] and
+an [img] of type [image], and fills the image with the result of [cfn].
+
+We'll also define [mandelbrot maxIter pos] which returns a number between
+0.0 and 1.0 depending on how many iterations were taken, then some functions
+to map this [mandelbrot] function into an image.
+
+{@ocaml[
+let drawAll cfn img =
+    match img with
+    | Image (_,pixels) ->
+        Array.iteri (fun y rows ->
+            Array.iteri (fun x _ ->
+                let new_color = cfn (x,y) in
+                rows.(x) <- new_color
+            ) rows) pixels;;
+
+let mandelbrot maxIter (x,y) =
+    let rec solve (a,b) c =
+        if c = maxIter then 1.0
+        else if (a*.a+.b*.b<=4.0) then
+            solve (a*.a -. b*.b +. x, 2.0*.a*.b +. y) (c+1)
+        else (float_of_int c /. float_of_int maxIter)
+    in solve (x,y) 0;;
+
+let chooseColour c =
+    let r = 255.0 *. cos c in
+    let g = 255.0 *. cos (2.0 *. c) *. cos (2.0 *. c) in
+    let b = 255.0 *. sin c in
+    (int_of_float r,int_of_float g,int_of_float b);;
+
+let rescale (w,h) (cx,cy,s) (x,y) =
+    let p = s *. (float_of_int x /. float_of_int w -. 0.5) +. cx in
+    let q = s *. (float_of_int y /. float_of_int h -. 0.5) +. cy in
+    (p,q);;
+
+let compute (w,h) (cx,cy,s) maxiter =
+    let i = image (w,h) (0,0,0) in
+    let cfn xy =
+        let (p,q) = rescale (w,h) (cx,cy,s) xy in
+        let c = mandelbrot maxiter (p,q) in
+        chooseColour c
+    in
+    drawAll cfn i;
+    i;;
+
+let convert ppm =
+    let cr = ImageUtil.chunk_reader_of_string ppm in
+    let image = ImagePPM.parsefile cr in
+    let b = Buffer.create 1000 in
+    let cw = ImageUtil.chunk_writer_of_buffer b in
+    ImagePNG.write_png cw image;
+    Buffer.contents b;;
+]}
+
+{1 Testing}
+
+Now let's test it by creating an image!
+
+{@ocaml[
+let test = compute (200,200) (-0.74364990, 0.13188204, 0.00073801) 256
+    |> toPPM
+    |> convert
+    |> Base64.encode
+    |> Result.get_ok;;
+Mime_printer.(push ~encoding:Base64 "image/png" test);;
+]}
